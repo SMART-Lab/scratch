@@ -1,54 +1,61 @@
+from __future__ import division
 import tables
+import time as t
 import numpy as np
+import os
 
 rng = np.random.RandomState(1234)
-
 nb_examples = 70000
+complibs = ['blosc', 'lzo', 'zlib', 'bzip2']
 
-#fileh = tables.open_file('seq1.h5', mode='r')
-my_filters = tables.filters.Filters(complevel=0)
-with tables.open_file('seq1.h5', mode='w', filters=my_filters) as fileh:
-    raw = fileh.create_group('/', 'raw')
-
-    input_data = fileh.create_carray(raw, 'input', obj=rng.randint(0, 255, (nb_examples, 28, 28)).astype(np.uint8))
-    output_data = fileh.create_carray(raw, 'output', obj=rng.randint(0, 9, nb_examples).astype(np.uint8))
+def zero_group_one_element(complib, nb_examples, f, raw, create):
+        ##### One Matrix for all input
+        create(raw, 'input', obj=rng.randint(0, 2, (nb_examples, 28, 28)).astype(np.bool))
+        create(raw, 'output', obj=rng.randint(0, 10, nb_examples).astype(np.uint8))
 
 
-    # input_data = fileh.create_group(raw, 'input')
-    # for i in range(nb_examples):
-    #     example_i = fileh.create_group(input_data, 'example{0}'.format(i))
-    #     #for j in range(rng.randint(1, 28*28)):
-    #         #m_i_j = fileh.create_carray(example_i, 'm_{0}_{1}'.format(i, j), obj=np.eye(rng.randint(0, 255)) * (i * nb_examples + j))
-    #     m_i_j = fileh.create_carray(example_i, 'm_{0}_{1}'.format(i, 0), obj=rng.randint(0, 1, (28,28)).astype(np.bool))
+def one_group_multiple_element(complib, nb_examples, f, raw, create):
+        ##### One group with multiple elements
+        input_data = f.create_group(raw, 'input')
+        for i in range(nb_examples):
+            create(input_data, 'm_{0}_{1}'.format(i, 0), obj=rng.randint(0, 2, (28,28)).astype(np.bool))
 
-    # output_data = fileh.create_group(raw, 'output')
-    # for i in range(nb_examples):
-    #     target_i = fileh.create_group(output_data, 'target{0}'.format(i))
-    #     #for j in range(rng.randint(1, 1)):
-    #     #    t_i_j = fileh.create_carray(target_i, 't_{0}_{1}'.format(i, j), obj=np.diag(rng.randint(0, 9, rng.randint(1, 1))))
-    #     t_i_j = fileh.create_carray(target_i, 't_{0}_{1}'.format(i, 0), obj=rng.randint(0, 9, (1,1)).astype(np.uint8))
+        output_data = f.create_group(raw, 'output')
+        for i in range(nb_examples):
+            create(output_data, 't_{0}_{1}'.format(i, 0), obj=rng.randint(0, 10, 1))
 
 
-    # print ""
-    # print "Display examples"
-    # print ""
-    # #Display examples
-    # for example_i in fileh.iter_nodes(where=fileh.root.raw.input):
-    #     for m_i_j in fileh.iter_nodes(where=example_i):
-    #         print m_i_j.read()
+def mutiple_group_one_element(complib, nb_examples, f, raw, create):
+        ##### One group per example
+        input_data = f.create_group(raw, 'input')
+        for i in range(nb_examples):
+            example_i = f.create_group(input_data, 'example{0}'.format(i))
+            create(example_i, 'm_{0}_{1}'.format(i, 0), obj=rng.randint(0, 2, (28,28)).astype(np.bool))
 
-    #     print "-------------"
+        output_data = f.create_group(raw, 'output')
+        for i in range(nb_examples):
+            target_i = f.create_group(output_data, 'target{0}'.format(i))
+            create(target_i, 't_{0}_{1}'.format(i, 0), obj=rng.randint(0, 10, 1))
 
+def write_file(write_method):
+    for complib in complibs:
+        my_filters = tables.filters.Filters(complevel=9, complib=complib)
+        filename = write_method.__name__+'_mnist_'+ complib +'_c9.h5'
+        with tables.open_file(filename, mode='w', filters=my_filters, max_group_width=nb_examples) as f:
+            raw = f.create_group('/', 'raw')
+            start_time = t.time()
+            write_method(complib, nb_examples, f, raw, f.create_carray)
+            print "Name:{0}\tTime:{1:.4f} sec\tSize:{2:.4f} Mb".format(filename, t.time() - start_time, os.path.getsize(filename)/1024/1024)
 
-    # #Display targets
-    # print ""
-    # print "Display targets"
-    # print ""
-    # for target_i in fileh.iter_nodes(where=fileh.root.raw.output):
-    #     for t_i_j in fileh.iter_nodes(where=target_i):
-    #         print t_i_j.read()
+    filename = write_method.__name__+'_mnist_c0.h5'
+    with tables.open_file(filename, mode='w', max_group_width=nb_examples) as f:
+        raw = f.create_group('/', 'raw')
+        start_time = t.time()
+        write_method(complib, nb_examples, f, raw, f.create_array)
+        print "Name:{0}\tTime:{1:.4f} sec\tSize:{2:.4f} Mb".format(filename, t.time() - start_time, os.path.getsize(filename)/1024/1024)
 
-    #     print "-------------"
-
-
-#fileh = tables.open_file('seq1.h5', mode='r')
+##### MAIN #####
+if __name__ == "__main__":
+    write_file(one_group_multiple_element)
+    write_file(mutiple_group_one_element)
+    write_file(zero_group_one_element)
