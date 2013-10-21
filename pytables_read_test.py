@@ -36,10 +36,10 @@ def read_file(write_method, dataset_name):
     os.remove(filename)
 
 
-def print_result(start_time, inp, out):
-    print "Time: {0:.2f}sec\tSize: {1}\Seq Read".format(t.time() - start_time, sys.getsizeof(inp) + sys.getsizeof(out))
+def print_result(start_time, inp, out, read):
+    print "Time: {0:.2f}sec\tSize: {1}\t{2} Read".format(t.time() - start_time, sys.getsizeof(inp) + sys.getsizeof(out), read)
     start_time = t.time()
-    print "Time: {1:.2f}sec\tSum: {0}\Seq Read".format(np.sum(inp) + np.sum(out), t.time() - start_time)
+    print "Time: {1:.2f}sec\tSum: {0}\t{2} Read".format(np.sum(inp) + np.sum(out), t.time() - start_time, read)
 
 # MAIN #####
 if __name__ == "__main__":
@@ -51,29 +51,25 @@ if __name__ == "__main__":
 
     #
     # TEST 1 ##
-    # filename = "F_zero_group_one_element_mnist.h5"
-    # print filename
-    # with tables.open_file(filename, mode='r') as f:
-    #     start_time = t.time()
-    #     inp = []
-    #     out = []
-    #     for i in f.root.raw.input:
-    #         inp.append(i)
-    #     for i in f.root.raw.output:
-    #         out.append(i)
-    #     print "Time: {0:.2f}sec\tSize: {1}\tSeq Read".format(t.time() - start_time, sys.getsizeof(inp) + sys.getsizeof(out))
-    #     start_time = t.time()
-    #     print "Time: {1:.2f}sec\tSum: {0}\tSeq Read".format(np.sum(inp) + np.sum(out), t.time() - start_time)
+    filename = "F_zero_group_one_element_mnist.h5"
+    print filename
+    with tables.open_file(filename, mode='r') as f:
+        start_time = t.time()
+        inp = []
+        out = []
+        for i in f.root.raw.input:
+            inp.append(i)
+        for i in f.root.raw.output:
+            out.append(i)
+        print_result(start_time, inp, out, "Seq")
 
-    #     inp = []
-    #     out = []
-    #     start_time = t.time()
-    #     for i in index:
-    #         inp.append(f.root.raw.input[i] )
-    #         out.append(f.root.raw.output[i] )
-    #     print "Time: {0:.2f}sec\tSize: {1}\tRandom Read".format(t.time() - start_time, sys.getsizeof(inp) + sys.getsizeof(out))
-    #     start_time = t.time()
-    #     print "Time: {1:.2f}sec\tSum: {0}\tRandom Read".format(np.sum(inp) + np.sum(out), t.time() - start_time)
+        inp = []
+        out = []
+        start_time = t.time()
+        for i in index:
+            inp.append(f.root.raw.input[i] )
+            out.append(f.root.raw.output[i] )
+        print_result(start_time, inp, out, "Random")
 
     #
     # TEST 2 ##
@@ -86,7 +82,7 @@ if __name__ == "__main__":
         for i in index:
             inp += f.get_node(f.root.raw.input, "example{0}".format(i))
             out += f.get_node(f.root.raw.output, "target{0}".format(i))
-        print_result(start_time, inp, out)
+        print_result(start_time, inp, out, "Random")
 
         start_time = t.time()
         inp = []
@@ -95,7 +91,7 @@ if __name__ == "__main__":
             inp += i
         for i in f.list_nodes(f.root.raw.output):
             out += i
-        print_result(start_time, inp, out)
+        print_result(start_time, inp, out, "Seq")
 
         start_time = t.time()
         inp = []
@@ -104,7 +100,7 @@ if __name__ == "__main__":
             inp += i
         for i in f.iter_nodes(f.root.raw.output):
             out += i
-        print_result(start_time, inp, out)
+        print_result(start_time, inp, out, "SeqIter")
 
 
     # filename = "F_one_group_multiple_element_mnist.h5"
