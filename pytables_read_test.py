@@ -1,4 +1,7 @@
 from __future__ import division
+
+from pdb import set_trace as dbg
+
 import tables
 import time as t
 import numpy as np
@@ -64,18 +67,34 @@ if __name__ == "__main__":
     import sys
     with tables.open_file(filename, mode='r') as f:
         start_time = t.time()
-        #for i in range(size):
-        inp = np.asarray(f.root.raw.input)
-        out = np.asarray(f.root.raw.output)
-        print "Time: {0:.2f}sec\tSize: {1}\tSeq Read".format(t.time() - start_time, inp.nbytes + out.nbytes)
+        inp = []
+        out = []
+        for i in f.root.raw.input:
+            inp.append(i)
+
+        for i in f.root.raw.output:
+            out.append(i)
+
+        #inp = np.asarray(f.root.raw.input)
+        #out = np.asarray(f.root.raw.output)
+        print "Time: {0:.2f}sec\tSize: {1}\tSeq Read".format(t.time() - start_time, sys.getsizeof(inp) + sys.getsizeof(out))
+
+        start_time = t.time()
+        #print np.sum(inp) + np.sum(out)
+        print "Time: {1:.2f}sec\tSum: {0}\tSeq Read".format(np.sum(inp) + np.sum(out), t.time() - start_time)
 
         inp = []
         out = []
         start_time = t.time()
         for i in index:
-            inp.append(f.root.raw.input[i])
-            out.append(f.root.raw.output[i])
+            inp.append(f.root.raw.input[i] )
+            out.append(f.root.raw.output[i] )
+
         print "Time: {0:.2f}sec\tSize: {1}\tRandom Read".format(t.time() - start_time, sys.getsizeof(inp) + sys.getsizeof(out))
+
+        start_time = t.time()
+        #print np.sum(inp) + np.sum(out)
+        print "Time: {1:.2f}sec\tSum: {0}\tRandom Read".format(np.sum(inp) + np.sum(out), t.time() - start_time)
 
 
     # filename = "F_one_group_multiple_element_mnist.h5"
