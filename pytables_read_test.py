@@ -61,12 +61,14 @@ if __name__ == "__main__":
     filename = "F_zero_group_one_element_mnist.h5"
     print filename
     import numpy as np
-    import sys
+
     with tables.open_file(filename, mode='r') as f:
         start_time = t.time()
         #for i in range(size):
         inp = np.asarray(f.root.raw.input)
         out = np.asarray(f.root.raw.output)
+        inp += 1
+        out += 1
         print "Time: {0:.2f}sec\tSize: {1}\tSeq Read".format(t.time() - start_time, inp.nbytes + out.nbytes)
 
         inp = []
@@ -75,7 +77,11 @@ if __name__ == "__main__":
         for i in index:
             inp.append(f.root.raw.input[i])
             out.append(f.root.raw.output[i])
-        print "Time: {0:.2f}sec\tSize: {1}\tRandom Read".format(t.time() - start_time, np.asarray(inp).nbytes + np.asarray(out).nbytes)
+        inp = np.asarray(inp)
+        out = np.asarray(out)
+        inp += 1
+        out += 1
+        print "Time: {0:.2f}sec\tSize: {1}\tRandom Read".format(t.time() - start_time, inp.nbytes + out.nbytes)
 
 
     # filename = "F_one_group_multiple_element_mnist.h5"
