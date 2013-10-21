@@ -1,4 +1,7 @@
 from __future__ import division
+
+from pdb import set_trace as dbg
+
 import tables
 import time as t
 import numpy as np
@@ -9,11 +12,13 @@ from glob import glob
 rng = np.random.RandomState(1234)
 nb_examples = 70000
 
+
 def _write_file(write_method, f, filename, create, complib):
     raw = f.create_group('/', 'raw')
     start_time = t.time()
     write_method(nb_examples, f, raw, create)
     print "\tCompLib: {0: <3}\tTime: {1:.2f}sec\tSize: {2:.2f}Mb".format(complib, t.time() - start_time, os.path.getsize(filename) / 1024 / 1024)
+
 
 def read_file(write_method, dataset_name):
     print write_method.__name__
@@ -30,52 +35,72 @@ def read_file(write_method, dataset_name):
         _write_file(write_method, f, filename, f.create_array, "None")
     os.remove(filename)
 
+
+def print_result(start_time, inp, out, read):
+    print "Time: {0:.2f}sec\tSize: {1}\t{2} Read".format(t.time() - start_time, sys.getsizeof(inp) + sys.getsizeof(out), read)
+    start_time = t.time()
+    print "Time: {1:.2f}sec\tSum: {0}\t{2} Read".format(np.sum(inp) + np.sum(out), t.time() - start_time, read)
+
 # MAIN #####
 if __name__ == "__main__":
+    import numpy as np
+    import sys
     size = 70000
     index = range(size)
     rng.shuffle(index)
 
-    # filename = "F_mutiple_group_one_element_mnist.h5"
-    # print filename
-    # with tables.open_file(filename, mode='r') as f:
-    #     start_time = t.time()
-    #     for i in index:
-    #         inp = f.get_node(f.root.raw.input, "example{0}".format(i))
-    #         out = f.get_node(f.root.raw.output, "target{0}".format(i))
-    #     print "Time: {0:.2f}sec Random Read".format(t.time() - start_time)
-
-    #     start_time = t.time()
-    #     inp = f.list_nodes(f.root.raw.input)
-    #     out = f.list_nodes(f.root.raw.output)
-    #     print "Time: {0:.2f}sec Seq Read".format((t.time() - start_time))
-
-    #     start_time = t.time()
-    #     for i in f.iter_nodes(f.root.raw.input):
-    #         inp = i
-    #     for i in f.iter_nodes(f.root.raw.output):
-    #         out = i
-    #     print "Time: {0:.2f}sec SeqIter Read".format((t.time() - start_time))
-
-
+    #
+    # TEST 1 ##
     filename = "F_zero_group_one_element_mnist.h5"
     print filename
-    import numpy as np
-    import sys
     with tables.open_file(filename, mode='r') as f:
         start_time = t.time()
-        #for i in range(size):
-        inp = np.asarray(f.root.raw.input)
-        out = np.asarray(f.root.raw.output)
-        print "Time: {0:.2f}sec\tSize: {1}\tSeq Read".format(t.time() - start_time, inp.nbytes + out.nbytes)
+        inp = []
+        out = []
+        for i in f.root.raw.input:
+            inp.append(i)
+        for i in f.root.raw.output:
+            out.append(i)
+        print_result(start_time, inp, out, "Seq")
 
         inp = []
         out = []
         start_time = t.time()
         for i in index:
-            inp.append(f.root.raw.input[i])
-            out.append(f.root.raw.output[i])
-        print "Time: {0:.2f}sec\tSize: {1}\tRandom Read".format(t.time() - start_time, sys.getsizeof(inp) + sys.getsizeof(out))
+            inp.append(f.root.raw.input[i] )
+            out.append(f.root.raw.output[i] )
+        print_result(start_time, inp, out, "Random")
+
+    #
+    # TEST 2 ##
+    filename = "F_mutiple_group_one_element_mnist.h5"
+    print filename
+    with tables.open_file(filename, mode='r') as f:
+        start_time = t.time()
+        inp = []
+        out = []
+        for i in index:
+            inp += f.get_node(f.root.raw.input, "example{0}".format(i))
+            out += f.get_node(f.root.raw.output, "target{0}".format(i))
+        print_result(start_time, inp, out, "Random")
+
+        start_time = t.time()
+        inp = []
+        out = []
+        for i in f.list_nodes(f.root.raw.input):
+            inp += i
+        for i in f.list_nodes(f.root.raw.output):
+            out += i
+        print_result(start_time, inp, out, "Seq")
+
+        start_time = t.time()
+        inp = []
+        out = []
+        for i in f.iter_nodes(f.root.raw.input):
+            inp += i
+        for i in f.iter_nodes(f.root.raw.output):
+            out += i
+        print_result(start_time, inp, out, "SeqIter")
 
 
     # filename = "F_one_group_multiple_element_mnist.h5"
