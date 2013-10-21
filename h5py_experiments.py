@@ -40,24 +40,31 @@ def mutiple_group_one_element(nb_examples, root, compression):
             target_i = output_data.create_group('target{0}'.format(i))
             target_i.create_dataset('t_{0}_{1}'.format(i, 0), data=rng.randint(0, 10, 1), compression=compression)
 
-def write_file(write_method):
-    for complib in complibs:
-        filename = write_method.__name__+'_mnist_'+ complib +'_c9.h5'
-        with h5py.File(filename, 'w') as f:
-            raw = f.create_group('raw')
-            start_time = t.time()
-            write_method(nb_examples, raw, complib)
-            print "Name:{0}\tTime:{1:.4f} sec\tSize:{2:.4f} Mb".format(filename, t.time() - start_time, os.path.getsize(filename)/1024/1024)
+def _write_file(write_method, f, filename, complib):
+    raw = f.create_group('raw')
+    start_time = t.time()
+    write_method(nb_examples, raw, complib)
+    print "\tCompLib: {0: <3}\tTime: {1:.2f}sec\tSize: {2:.2f}Mb".format(complib, t.time() - start_time, os.path.getsize(filename) / 1024 / 1024)
 
-    filename = write_method.__name__+'_mnist_c0.h5'
-    with h5py.File(filename, 'w') as f:
-        raw = f.create_group('raw')
-        start_time = t.time()
-        write_method(nb_examples, raw, None)
-        print "Name:{0}\tTime:{1:.4f} sec\tSize:{2:.4f} Mb".format(filename, t.time() - start_time, os.path.getsize(filename)/1024/1024)
+
+def write_file(write_method, dataset_name):
+    print write_method.__name__
+    for complib in complibs:
+        filename = write_method.__name__ + '_' + dataset_name + '_' + complib + '_c9.h5'
+        with h5py.File(filename, mode='w') as f:
+            _write_file(write_method, f, filename, complib)
+        os.remove(filename)
+
+    filename = write_method.__name__ + '_' + dataset_name + '.h5'
+    with h5py.File(filename, mode='w') as f:
+        _write_file(write_method, f, filename, None)
+    os.remove(filename)
+
 
 ##### MAIN #####
 if __name__ == "__main__":
-    write_file(zero_group_one_element)
-    write_file(one_group_multiple_element)
-    write_file(mutiple_group_one_element)
+    dataset_name = "mnist"
+    print "Dataset like " + dataset_name
+    write_file(one_group_multiple_element, dataset_name)
+    write_file(mutiple_group_one_element, dataset_name)
+    write_file(zero_group_one_element, dataset_name)
