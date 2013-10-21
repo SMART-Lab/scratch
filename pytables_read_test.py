@@ -75,7 +75,7 @@ if __name__ == "__main__":
         for i in index:
             inp.append(f.root.raw.input[i])
             out.append(f.root.raw.output[i])
-        print "Time: {0:.2f}sec\tSize: {1}\tRandom Read".format(t.time() - start_time, sys.getsizeof(inp) + sys.getsizeof(out))
+        print "Time: {0:.2f}sec\tSize: {1}\tRandom Read".format(t.time() - start_time, np.asarray(inp).nbytes + np.asarray(out).nbytes)
 
 
     # filename = "F_one_group_multiple_element_mnist.h5"
