@@ -13,7 +13,7 @@ def zero_group_one_element(nb_examples, root, compression):
         root.create_dataset('input',
                             data=rng.randint(0, 2, (nb_examples, 28, 28)).astype(np.bool),
                             compression=compression,
-                            chunks=(1024, 28, 28))
+                            chunks=(1, 28, 28))
         root.create_dataset('output', data=rng.randint(0, 10, nb_examples).astype(np.uint8), compression=compression)
 
 
@@ -48,23 +48,23 @@ def _write_file(write_method, f, filename, complib):
 
 
 def write_file(write_method, dataset_name):
-    print write_method.__name__
-    for complib in complibs:
-        filename = write_method.__name__ + '_' + dataset_name + '_' + complib + '_c9.h5'
-        with h5py.File(filename, mode='w') as f:
-            _write_file(write_method, f, filename, complib)
-        os.remove(filename)
+    # print write_method.__name__
+    # for complib in complibs:
+    #     filename = write_method.__name__ + '_' + dataset_name + '_' + complib + '_c9.h5'
+    #     with h5py.File(filename, mode='w') as f:
+    #         _write_file(write_method, f, filename, complib)
+    #     os.remove(filename)
 
     filename = write_method.__name__ + '_' + dataset_name + '.h5'
     with h5py.File(filename, mode='w') as f:
         _write_file(write_method, f, filename, None)
-    os.remove(filename)
+#    os.remove(filename)
 
 
 ##### MAIN #####
 if __name__ == "__main__":
     dataset_name = "mnist"
     print "Dataset like " + dataset_name
-    write_file(one_group_multiple_element, dataset_name)
-    write_file(mutiple_group_one_element, dataset_name)
+    #write_file(one_group_multiple_element, dataset_name)
+    #write_file(mutiple_group_one_element, dataset_name)
     write_file(zero_group_one_element, dataset_name)
