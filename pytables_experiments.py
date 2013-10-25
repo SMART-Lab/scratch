@@ -1,4 +1,6 @@
 from __future__ import division
+#from ipdb import set_trace as dbg
+
 import tables
 import time as t
 import numpy as np
@@ -6,7 +8,7 @@ import os
 
 rng = np.random.RandomState(1234)
 nb_examples = 70000
-complibs = ['blosc', 'lzo', 'zlib', 'bzip2']
+complibs = ['blosc', 'zlib', 'bzip2']
 
 
 def zero_group_one_element(nb_examples, f, raw, create):
@@ -23,7 +25,7 @@ def one_group_multiple_element(nb_examples, f, raw, create):
 
         output_data = f.create_group(raw, 'output')
         for i in range(nb_examples):
-            create(output_data, 't_{0}_{1}'.format(i, 0), obj=rng.randint(0, 10, 1))
+            create(output_data, 't_{0}_{1}'.format(i, 0), obj=rng.randint(0, 10, 1).astype(np.uint8))
 
 
 def mutiple_group_one_element(nb_examples, f, raw, create):
@@ -36,7 +38,7 @@ def mutiple_group_one_element(nb_examples, f, raw, create):
         output_data = f.create_group(raw, 'output')
         for i in range(nb_examples):
             target_i = f.create_group(output_data, 'target{0}'.format(i))
-            create(target_i, 't_{0}_{1}'.format(i, 0), obj=rng.randint(0, 10, 1))
+            create(target_i, 't_{0}_{1}'.format(i, 0), obj=rng.randint(0, 10, 1).astype(np.uint8))
 
 
 def _write_file(write_method, f, filename, create, complib):
@@ -47,23 +49,22 @@ def _write_file(write_method, f, filename, create, complib):
 
 def write_file(write_method, dataset_name):
     print write_method.__name__
-    #filename = "{0}_{1}_{2}.h5".format(write_method.__name__, dataset_name)
     for complib in complibs:
         my_filters = tables.filters.Filters(complevel=9, complib=complib)
         filename = write_method.__name__ + '_' + dataset_name + '_' + complib + '_c9.h5'
         with tables.open_file(filename, mode='w', filters=my_filters, max_group_width=nb_examples) as f:
             _write_file(write_method, f, filename, f.create_carray, complib)
-        os.remove(filename)
+        #os.remove(filename)
 
     filename = write_method.__name__ + '_' + dataset_name + '.h5'
     with tables.open_file(filename, mode='w', max_group_width=nb_examples) as f:
         _write_file(write_method, f, filename, f.create_array, "None")
-    os.remove(filename)
+    #os.remove(filename)
 
 # MAIN #####
 if __name__ == "__main__":
-    dataset_name = "mnist"
+    dataset_name = "pytables_mnist"
     print "Dataset like " + dataset_name
+    write_file(zero_group_one_element, dataset_name)
     write_file(one_group_multiple_element, dataset_name)
     write_file(mutiple_group_one_element, dataset_name)
-    write_file(zero_group_one_element, dataset_name)
