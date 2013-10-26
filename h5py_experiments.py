@@ -10,8 +10,7 @@ from functools import partial
 
 rng = np.random.RandomState(1234)
 nb_examples = 70000
-#complibs = ['gzip', 'lzf']
-complibs = ['gzip']
+complibs = ['gzip', 'lzf']
 chunk_sizes = [1, 50, 1024]
 
 def zero_group_one_element(nb_examples, root, compression, chunk_size=None):

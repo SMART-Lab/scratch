@@ -1,5 +1,5 @@
 from __future__ import division
-from ipdb import set_trace as dbg
+#from ipdb import set_trace as dbg
 
 import tables
 import time as t
@@ -59,23 +59,7 @@ def read_test_zero_group_one_element_mnist(filename, index, filters=None):
 
 def read_test_one_group_multiple_element_mnist(filename, index, filters=None):
     print filename
-    # dbg()
-    # start_time = t.time()
-    # with tables.open_file(filename, mode='r', filters=filters, PYTABLES_SYS_ATTRS=False) as f:
-    #     print t.time() - start_time
-    #     dbg()
-    #     inp = []
-    #     out = []
-    #     for i in f.root.raw.input:
-    #         dbg()
-    #         inp.append(i.read())
 
-    #     dbg()
-    #     print_result(start_time, inp, out, "Seq - Iter")
-    # dbg()
-
-    print filename
-    dbg()
     start_time = t.time()
     with tables.open_file(filename, mode='r', filters=filters) as f:
         print t.time() - start_time
@@ -207,9 +191,6 @@ if __name__ == "__main__":
     filenames = [f for f in filenames if not f in already_completed]
     filenames = [f for f in filenames if not 'gzip' in f]
     filenames = [f for f in filenames if not 'lzf' in f]
-    #filenames = [f for f in filenames if not 'zlib' in f]
-    #filenames = [f for f in filenames if not 'blosc' in f]
-    #filenames = [f for f in filenames if not 'bzip2' in f]
 
     for f in filenames:
         filters = None
@@ -221,12 +202,10 @@ if __name__ == "__main__":
             filters = tables.filters.Filters(complevel=9, complib='bzip2')
 
         if 'zero_group_one_element' in f:
-            #read_test_zero_group_one_element_mnist(f, index, filters)
-            pass
+            read_test_zero_group_one_element_mnist(f, index, filters)
         elif 'one_group_multiple_element' in f:
             read_test_one_group_multiple_element_mnist(f, index, filters)
         elif 'mutiple_group_one_element' in f:
-            #read_test_mutiple_group_one_element_mnist(f, index, filters)
-            pass
+            read_test_mutiple_group_one_element_mnist(f, index, filters)
 
         completed_file.write(f + "\n")

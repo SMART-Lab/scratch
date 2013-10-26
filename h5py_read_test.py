@@ -1,5 +1,5 @@
 from __future__ import division
-from ipdb import set_trace as dbg
+#from ipdb import set_trace as dbg
 
 import h5py
 import time as t
@@ -9,6 +9,11 @@ import os
 from os.path import join
 
 from itertools import izip
+        
+def buffered_iter(arr, buffer_size=1000):
+    for idx in xrange(0, len(arr), buffer_size):
+        for e in arr[idx:idx+buffer_size]:
+            yield e
 
 def print_result(start_time, inp, out, read):
     print "\t#{0} Read#".format(read)
@@ -26,6 +31,16 @@ def read_test_zero_group_one_element_mnist(filename, index):
         out = f['raw']['output'][()]
         print_result(start_time, inp, out, "In RAM")
 
+    with h5py.File(filename, mode='r') as f:
+        start_time = t.time()
+        inp, out = [], []
+
+        for i, o in izip(buffered_iter(f['raw']['input']), buffered_iter(f['raw']['output'])):
+            inp.append(i)
+            out.append(o)
+
+        print_result(start_time, inp, out, "Seq - Buffering")
+        
     with h5py.File(filename, mode='r') as f:
         start_time = t.time()
         inp = []
@@ -55,7 +70,6 @@ def read_test_one_group_multiple_element_mnist(filename, index):
         inp = []
         out = []
         for i, o in izip(f['raw']['input'].itervalues(), f['raw']['output'].itervalues()):
-            dbg()
             inp.append(i[()])
             out.append(o[()])
         print_result(start_time, inp, out, "Seq - Iter")
